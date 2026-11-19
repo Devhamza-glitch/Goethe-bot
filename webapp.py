@@ -190,16 +190,6 @@ if SENTRY_DSN:
         send_default_pii=False,
     )
 
-# ── Allowed origins for CORS ──
-_ALLOWED_ORIGINS = {
-    "https://goethe-frontend-v3.vercel.app",
-    "https://goethe-booking-bot-production-21af.up.railway.app",
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://127.0.0.1:5000",
-}
-
-
 @app.before_request
 def enforce_https():
     if not flask.request.is_secure and os.environ.get("ENFORCE_HTTPS", "").lower() in ("1", "true", "yes"):
@@ -473,11 +463,8 @@ def run_students_web(students: List[Dict], headless: bool, immediate: bool = Fal
 # ── Security headers + CORS ──
 @app.after_request
 def add_headers(resp):
-    origin = flask.request.headers.get("Origin", "")
-    if origin in _ALLOWED_ORIGINS or not origin:
-        resp.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
-    else:
-        resp.headers["Access-Control-Allow-Origin"] = ""
+    # Allow any frontend origin while testing deployments.
+    resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, DELETE"
     resp.headers["Access-Control-Expose-Headers"] = "X-RateLimit-Remaining, Retry-After"
@@ -1617,6 +1604,11 @@ def _make_bounded_server(host: str, port: int, max_threads: int):
     """
     import socketserver
     from werkzeug.serving import ThreadedWSGIServer
+
+    # IPv6 brackets belong in URLs, not in the host passed to a socket.
+    host = host.strip()
+    if host.startswith("[") and host.endswith("]"):
+        host = host[1:-1]
 
     class _BoundedThreadedWSGIServer(ThreadedWSGIServer):
         daemon_threads = True
