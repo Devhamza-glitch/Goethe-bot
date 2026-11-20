@@ -51,7 +51,7 @@ from selector_fallbacks import (
     find_elements_fallback,
     wait_for_any_selector,
 )
-from proxy_rotator import ProxyRotator, load_proxy_list
+from proxy_rotator import ProxyRotator, load_proxy_list, mask_proxy
 from confirmation_parser import parse_confirmation_text, parse_confirmation_url, summarize as summarize_confirmation
 from circuit_breaker import CircuitBreaker
 from selenium.common.exceptions import (
@@ -432,7 +432,7 @@ def create_driver(use_headless: bool, logger: logging.Logger, proxy: Optional[st
             try:
                 driver = uc.Chrome(options=options, version_main=None, use_subprocess=True)
                 _apply_stealth(driver)
-                logger.info("Driver created (undetected-chromedriver): UA=%s, VP=%sx%s%s", ua[:50], vp[0], vp[1], f", proxy={proxy}" if proxy else "")
+                logger.info("Driver created (undetected-chromedriver): UA=%s, VP=%sx%s%s", ua[:50], vp[0], vp[1], f", proxy={mask_proxy(proxy)}" if proxy else "")
                 return driver
             except Exception as exc:
                 last_exc = exc
@@ -469,7 +469,7 @@ def create_driver(use_headless: bool, logger: logging.Logger, proxy: Optional[st
             else:
                 raise
 
-    logger.info("Driver created: UA=%s, VP=%sx%s%s", ua[:50], vp[0], vp[1], f", proxy={proxy}" if proxy else "")
+    logger.info("Driver created: UA=%s, VP=%sx%s%s", ua[:50], vp[0], vp[1], f", proxy={mask_proxy(proxy)}" if proxy else "")
     return driver
 
 
@@ -2067,7 +2067,7 @@ def run_student_flow(student: Dict[str, str], use_headless: bool, logger: loggin
     if not assigned_proxy:
         assigned_proxy = PROXY_ROTATOR.get()
         if assigned_proxy:
-            logger.info("Assigned proxy: %s", assigned_proxy)
+            logger.info("Assigned proxy: %s", mask_proxy(assigned_proxy))
 
     logger.info("=" * 60)
     logger.info("STARTING STUDENT: %s | %s | %s | %s", name, email, level, city)

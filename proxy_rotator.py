@@ -3,11 +3,19 @@ from __future__ import annotations
 import logging
 import os
 import random
+import re
 import threading
 import time
 from typing import Dict, List, Optional
 
 import requests
+
+
+def mask_proxy(proxy: Optional[str]) -> str:
+    """Hide the password in a proxy URL for logging: user:***@host:port."""
+    if not proxy:
+        return ""
+    return re.sub(r"(//[^:/@]+):[^@]*@", r"\1:***@", proxy)
 
 
 def load_proxy_list() -> List[str]:
@@ -102,7 +110,7 @@ class ProxyRotator:
         with self._lock:
             self._blacklist[proxy] = time.monotonic() + self._blacklist_duration
         if self.logger:
-            self.logger.info("Proxy %s blacklisted for %ds", proxy, self._blacklist_duration)
+            self.logger.info("Proxy %s blacklisted for %ds", mask_proxy(proxy), self._blacklist_duration)
 
     def mark_success(self, proxy: str) -> None:
         pass
