@@ -10,10 +10,44 @@ from typing import Dict, List, Optional
 import requests
 
 
+def load_proxy_list() -> List[str]:
+    """Build the proxy pool from env vars (never hardcode credentials).
+
+    1. ``PROXY_LIST`` -- comma-separated proxy URLs, used as-is.
+    2. ``DATAIMPULSE_USER`` + ``DATAIMPULSE_PASS`` -- if set, generates
+       ``PROXY_SESSIONS`` (default 5) sticky Pakistan sessions on DataImpulse,
+       each a different residential IP. ``DATAIMPULSE_COUNTRY`` (default ``pk``),
+       ``DATAIMPULSE_HOST`` / ``DATAIMPULSE_PORT`` and ``PROXY_SESSION_MINUTES``
+       (default 30) are optional.
+
+    Both sources are merged (duplicates dropped), PROXY_LIST first.
+    """
+    proxies = [p.strip() for p in os.environ.get("PROXY_LIST", "").split(",") if p.strip()]
+
+    user = os.environ.get("DATAIMPULSE_USER", "").strip()
+    pw = os.environ.get("DATAIMPULSE_PASS", "").strip()
+    if user and pw:
+        host = os.environ.get("DATAIMPULSE_HOST", "gw.dataimpulse.com").strip()
+        port = os.environ.get("DATAIMPULSE_PORT", "823").strip()
+        country = os.environ.get("DATAIMPULSE_COUNTRY", "pk").strip().lower()
+        minutes = os.environ.get("PROXY_SESSION_MINUTES", "30").strip()
+        try:
+            n = max(1, int(os.environ.get("PROXY_SESSIONS", "5")))
+        except ValueError:
+            n = 5
+        for i in range(1, n + 1):
+            proxies.append(
+                f"http://{user}__cr.{country}__sessid.goethe{i}__sesstime.{minutes}:{pw}@{host}:{port}"
+            )
+
+    seen = set()
+    return [p for p in proxies if not (p in seen or seen.add(p))]
+
+
 class ProxyRotator:
     def __init__(self, proxy_list: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
         self.logger = logger or logging.getLogger("proxy_rotator")
-        raw = proxy_list or [p.strip() for p in os.environ.get("PROXY_LIST", "").split(",") if p.strip()]
+        raw = proxy_list or load_proxy_list()
         self._proxies: List[str] = raw
         self._blacklist: Dict[str, float] = {}
         self._lock = threading.Lock()

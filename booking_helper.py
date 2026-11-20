@@ -51,7 +51,7 @@ from selector_fallbacks import (
     find_elements_fallback,
     wait_for_any_selector,
 )
-from proxy_rotator import ProxyRotator
+from proxy_rotator import ProxyRotator, load_proxy_list
 from confirmation_parser import parse_confirmation_text, parse_confirmation_url, summarize as summarize_confirmation
 from circuit_breaker import CircuitBreaker
 from selenium.common.exceptions import (
@@ -125,7 +125,7 @@ ACTIVE_HOURS_END = int(os.environ.get("ACTIVE_HOURS_END", "20"))      # 8 PM PKT
 SLEEP_POLL_INTERVAL = int(os.environ.get("SLEEP_POLL_INTERVAL", "300"))  # 5 min during quiet hours
 
 # ── Proxy rotation ──
-PROXY_LIST = [p.strip() for p in os.environ.get("PROXY_LIST", "").split(",") if p.strip()]
+PROXY_LIST = load_proxy_list()
 PROXY_ROTATOR = ProxyRotator(logger=logging.getLogger("proxy_rotator"))
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",

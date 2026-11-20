@@ -29,8 +29,8 @@ def _first_proxy():
     modifiers (`__sessid.*` / `__sesstime.*`) → a ROTATING IP per request while
     keeping the country (`__cr.pk`). Booking keeps its own sticky proxy elsewhere."""
     import re as _re
-    raw = os.environ.get("PROXY_LIST", "")
-    px = next((p.strip() for p in raw.split(",") if p.strip()), "")
+    from proxy_rotator import load_proxy_list
+    px = next(iter(load_proxy_list()), "")
     if not px:
         return None
     if "://" not in px:
