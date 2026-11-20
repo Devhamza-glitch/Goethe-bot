@@ -1668,6 +1668,12 @@ def main():
     print("  Press Ctrl+C to stop the server")
 
     max_threads = int(os.environ.get("MAX_SERVER_THREADS", "16"))
+    # Smaller per-thread stacks (default 8MB) so the bot + proxy relay threads
+    # don't exhaust the container's memory/thread budget.
+    try:
+        threading.stack_size(1024 * 1024)
+    except (ValueError, RuntimeError):
+        pass
     _make_bounded_server(host, port, max_threads).serve_forever()
 
 

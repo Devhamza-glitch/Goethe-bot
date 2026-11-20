@@ -30,7 +30,7 @@ _LOCK = threading.Lock()
 
 # Idle timeout (seconds): a relay socket with no traffic for this long is closed,
 # so its two threads exit. Bounds thread growth without blocking new connections.
-_IDLE_TIMEOUT = 180
+_IDLE_TIMEOUT = 60
 
 
 def _pipe(a: socket.socket, b: socket.socket) -> None:

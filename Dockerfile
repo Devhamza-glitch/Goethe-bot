@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget gnupg unzip curl xvfb ca-certificates \
+    wget gnupg unzip curl xvfb ca-certificates tini \
     && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/chrome-key.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/chrome-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
@@ -36,4 +36,8 @@ COPY . .
 
 ENV PORT=5000 HOST=0.0.0.0
 EXPOSE 5000
+# tini as PID 1 reaps zombie Chrome/chromedriver children. Without it, python is
+# PID 1, exited Chrome processes are never reaped, they pile up against the
+# container's pids limit, and every new thread fails: "can't start new thread".
+ENTRYPOINT ["/usr/bin/tini", "-s", "--"]
 CMD ["python", "webapp.py"]
