@@ -475,13 +475,14 @@ def create_driver(use_headless: bool, logger: logging.Logger, proxy: Optional[st
 
 def is_blocked_response(driver: webdriver.Chrome) -> bool:
     title = (driver.title or "").lower()
-    if any(t in title for t in ["429", "503", "too many requests", "access denied", "attention required"]):
+    if any(t in title for t in ["429", "403", "503", "forbidden", "too many requests", "access denied", "attention required"]):
         return True
     try:
         body = driver.find_element(By.TAG_NAME, "body").text.lower()
     except Exception:
         body = ""
-    strong = ["checking your browser", "verify you are human", "just a moment", "ray id"]
+    strong = ["checking your browser", "verify you are human", "just a moment", "ray id",
+              "your request was forbidden by the server"]
     return any(p in body for p in strong)
 
 
